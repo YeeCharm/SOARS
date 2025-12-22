@@ -1,0 +1,9 @@
+evaluate:
+  eval_only: True
+  task: []
+  template: "simple"
+  ade:
+    config: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/ade20k.py
+    opts: []
+seed: 0
+

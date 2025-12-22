@@ -1,0 +1,19 @@
+_base_: default.yml
+model_name: default
+checkpoint:
+  resume: ''
+model:
+  clip_model_name: ViT-B/16
+  keep_cls: false
+  keep_end_seq: false
+
+  # [关键修改] 显式指定维度为 3072 (1024 * 3)
+  dino_embed_dim: 3072
+
+  model_name: vit_large_patch16_dinov3.lvd1689m
+  proj_class: dinov3_vitl_mlp_infonce
+  proj_model: ProjectionLayer
+  proj_name: dinov3_vitl_mlp_infonce_multiscale_lvd1689m_rs3_multiscale_best
+  resize_dim: 512
+  type: DINOText
+  use_avg_text_token: false

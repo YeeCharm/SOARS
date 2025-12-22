@@ -1,0 +1,15 @@
+evaluate:
+  pamr: false
+  bg_thresh: 0.4
+  kp_w: 0.3
+
+  pred_qual_path: null
+  gt_qual_path: null
+
+  eval_only: true
+  template: sub_imagenet_template
+  task:
+    - vaihingen
+
+  # evaluation
+  vaihingen: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/vaihingen.py

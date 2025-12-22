@@ -1,0 +1,27 @@
+# 排除不需要的文件和文件夹
+.idea/
+weights/
+data.zip
+output/
+segmentation_results/
+*.log
+__pycache__/
+assets/
+CLIP-main/
+data/
+check_mmseg_mock.py
+check_registry.py
+dino_extraction_v3_multi_gpu.py
+dino_extraction_v4_multi.py
+final_segmentation.png
+hf_demo_local.py
+hf_demo.ipynb
+hf_demo.py
+pikachu_seg_check.png
+pikachu_seg.png
+README.md
+requirements.txt
+similarity_map.png
+test_mmseg_import.py
+trace.log
+train_multi.py

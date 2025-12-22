@@ -1,0 +1,47 @@
+evaluate:
+  pamr: true
+  bg_thresh: 0.4
+  kp_w: 0.3
+
+  pred_qual_path: null
+  gt_qual_path: null
+
+  eval_only: true
+  template: sub_imagenet_template
+  task:
+    - openearthmap
+
+  openearthmap: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/openearthmap.py
+
+# ============================================================
+  # 新增：OpenEarthMap 专属的类别和文本定义 (Zero-Shot 必须)
+  # ============================================================
+  
+  # 1. 类别名称列表 (对应 openearthmap.py 中的 CLASSES)
+  openearthmap_class_names: [
+    "background",
+    "bareland",
+    "grass",
+    "pavement",
+    "road",
+    "tree",
+    "water",
+    "cropland",
+    "building"
+  ]
+
+  # 2. 详细的文本提示词 (Text Prompts)
+  # 每一个列表对应上面的一个类别，包含该类别的同义词
+  openearthmap_texts: [
+      ["background"],                             # Class 0
+      ["bareland", "barren", "barren land"],      # Class 1
+      ["grass", "grassland", "lawn"],             # Class 2
+      ["pavement", "walkway"],                    # Class 3
+      ["road", "street", "highway"],              # Class 4
+      ["tree", "forest", "woods"],                # Class 5
+      ["water", "river", "lake"],                 # Class 6
+      ["cropland", "agricultural land", "field"], # Class 7
+      ["building", "roof", "house"]               # Class 8
+  ]
+
+seed: 42

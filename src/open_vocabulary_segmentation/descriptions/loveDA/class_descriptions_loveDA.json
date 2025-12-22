@@ -1,0 +1,55 @@
+{
+  "LoveDADataset": {
+    "background": [
+      "mixed unlabeled mosaic",
+      "shadowed indistinct areas",
+      "sensor noise patches",
+      "cloud haze regions",
+      "edge padding strips"
+    ],
+    "building": [
+      "rectangular bright rooftops",
+      "dense roof grid",
+      "sharp roof edges",
+      "blocky rooftop clusters",
+      "high-contrast roof shadows"
+    ],
+    "road": [
+      "thin linear strips",
+      "smooth asphalt ribbons",
+      "curving pale lanes",
+      "intersecting line junctions",
+      "parallel lane markings"
+    ],
+    "water": [
+      "dark smooth pools",
+      "meandering reflective rivers",
+      "shoreline edge gradients",
+      "specular sun glint",
+      "uniform low-texture surfaces"
+    ],
+    "barren": [
+      "light sandy patches",
+      "rough exposed soil",
+      "rocky speckled ground",
+      "eroded textured slopes",
+      "dusty uniform expanses"
+    ],
+    "forest": [
+      "dark dense canopy",
+      "fine-grain foliage texture",
+      "irregular tree crowns",
+      "continuous green mass",
+      "shadow-dappled canopy"
+    ],
+    "agricultural": [
+      "rectangular field parcels",
+      "striped crop rows",
+      "patchwork field mosaic",
+      "uniform planted texture",
+      "irrigation circle fields"
+    ]
+  }
+}
+
+
