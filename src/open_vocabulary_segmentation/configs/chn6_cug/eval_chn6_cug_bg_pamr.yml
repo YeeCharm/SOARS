@@ -1,0 +1,20 @@
+evaluate:
+  # pamr: true #默认
+  pamr: false #关闭pamr
+  bg_thresh: 0.547 #rs3,pub11最好
+  # bg_thresh: 0.534 #git10m最好
+  # kp_w: 0.3 #默认
+  kp_w: 0
+
+  pred_qual_path: null
+  gt_qual_path: null
+
+  eval_only: true
+  template: sub_imagenet_template
+  task:
+    - chn6_cug
+
+  chn6_cug: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/chn6_cug.py
+
+
+seed: 42
