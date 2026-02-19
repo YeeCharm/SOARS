@@ -1,0 +1,19 @@
+evaluate:
+  # pamr: true #默认
+  pamr: false 
+  bg_thresh: 0.52 #rs3最佳
+  # kp_w: 0.3 #默认
+  kp_w: 0
+
+  pred_qual_path: null
+  gt_qual_path: null
+
+  eval_only: true
+  template: sub_imagenet_template
+  task:
+    - xbd
+
+  xbd: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/xbd.py
+
+
+seed: 42
