@@ -1,0 +1,21 @@
+evaluate:
+  # pamr: true  #默认
+  pamr: false
+  # bg_thresh: 0.54 #rs3默认最好
+  bg_thresh: 0.545 #pub11默认最好
+  # bg_thresh: 0.536 #git10m默认最好
+  # kp_w: 0.3  #默认
+  kp_w: 0
+
+  pred_qual_path: null
+  gt_qual_path: null
+
+  eval_only: true
+  template: sub_imagenet_template
+  task:
+    - spacenet
+
+  spacenet: src/open_vocabulary_segmentation/segmentation/configs/_base_/datasets/spacenet.py
+
+
+seed: 42
