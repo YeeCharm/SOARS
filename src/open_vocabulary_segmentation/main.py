@@ -267,9 +267,7 @@ def train(cfg, args):
 
 
     if cfg.evaluate.eval_only:
-        # res = evaluate(cfg, model, val_loaders)
-        
-        res = evaluate(cfg, model, val_loaders, args)
+        res = evaluate(cfg, model, val_loaders)
         logger.info(res)
         # if "metrics" in res, assign to metrics and remove it
         metrics = res.pop("metrics", None)
@@ -456,7 +454,7 @@ def do_training(config, model, data_loader, optimizer, lr_scheduler, scaler, val
 
 
 @torch.no_grad()
-def evaluate(cfg, model, val_loaders, args=None):
+def evaluate(cfg, model, val_loaders):
     logger = get_logger()
     ret = {}
     model.eval()
@@ -468,9 +466,7 @@ def evaluate(cfg, model, val_loaders, args=None):
         dataset_class = loader.dataset.__class__.__name__
         logger.info(f"### Validation dataset: {key} ({dataset_class})")
 
-        # miou, metrics = validate_seg(cfg, cfg.evaluate.get(key), loader, model)
-        
-        miou, metrics = validate_seg(cfg, cfg.evaluate.get(key), loader, model, args)
+        miou, metrics = validate_seg(cfg, cfg.evaluate.get(key), loader, model)
 
         logger.info(f"[{key}] mIoU of {len(loader.dataset)} test images: {miou:.2f}%")
         ret[f"val/{key}_miou"] = miou
@@ -483,147 +479,25 @@ def evaluate(cfg, model, val_loaders, args=None):
     return ret
 
 
-# @torch.no_grad()
-# def validate_seg(config, seg_config, data_loader, model):
-#     logger = get_logger()
-#     if device == "cuda":
-#         dist.barrier()
-
-#     model.eval()
-
-#     if hasattr(model, "module"):
-#         model_without_ddp = model.module
-#     else:
-#         model_without_ddp = model
-
-#     seg_model = build_dinotext_seg_inference(
-#         model_without_ddp,
-#         data_loader.dataset,
-#         config,
-#         seg_config,
-#     )
-
-#     if device == "cuda":
-#         mmddp_model = MMDistributedDataParallel(
-#             seg_model, device_ids=[torch.cuda.current_device()], broadcast_buffers=False
-#         )
-#     else:
-#         mmddp_model = seg_model
-#     mmddp_model.eval()
-
-#     # TODO: Use multi-gpu-test from mmseg instead of ours
-#     results, pred_qualitatives, gt_qualitatives, num_classes = us.multi_gpu_test(
-#         model=mmddp_model,
-#         data_loader=data_loader,
-#         tmpdir=None,
-#         gpu_collect=False, # device == "cuda",
-#         efficient_test=False,
-#         pre_eval=True,
-#         format_only=False,
-#     )
-
-#     if device == "cpu" or dist.get_rank() == 0:
-#         from segmentation.evaluation.custom_eval import evaluate_dataset
-#         metric = [evaluate_dataset(data_loader.dataset, results, logger=logger)]
-#     else:
-#         metric = [None]
-
-#     if device == "cuda":
-#         dist.broadcast_object_list(metric)
-#     miou_result = metric[0]["mIoU"] * 100
-
-#     torch.cuda.empty_cache()
-#     if device == "cuda":
-#         dist.barrier()
-#     return miou_result, metric
-
-
-
 @torch.no_grad()
-def validate_seg(config, seg_config, data_loader, model, args=None):
+def validate_seg(config, seg_config, data_loader, model):
     logger = get_logger()
     if device == "cuda":
         dist.barrier()
 
     model.eval()
 
-
-
     if hasattr(model, "module"):
         model_without_ddp = model.module
     else:
         model_without_ddp = model
 
-    # -------------------------------------------------------------
-    # [关键修复 1] 稳健地获取数据集 CLASSES (解决 Subset 报错)
-    # -------------------------------------------------------------
-    real_dataset = data_loader.dataset
-    while isinstance(real_dataset, Subset):
-        real_dataset = real_dataset.dataset
-    
-    CLASSES = None
-    # 依次尝试获取 CLASSES
-    if hasattr(real_dataset, 'CLASSES'):
-        CLASSES = real_dataset.CLASSES
-    elif hasattr(real_dataset, 'metainfo') and 'classes' in real_dataset.metainfo:
-        CLASSES = real_dataset.metainfo['classes']
-    elif hasattr(real_dataset, 'METAINFO') and 'classes' in real_dataset.METAINFO:
-        CLASSES = real_dataset.METAINFO['classes']
-    else:
-        try: CLASSES = real_dataset.__class__.CLASSES
-        except: pass
-            
-    if CLASSES is None:
-        # 如果实在找不到，打印个警告，但这通常不会发生
-        logger.warning(f"Could not find 'CLASSES' in dataset {type(real_dataset)}. LLM expansion might fail.")
-        CLASSES = [] 
-    # -------------------------------------------------------------
-
-    # -------------------------------------------------------------
-    # [关键修复 2] 注入 LLM 逻辑并手动生成 Embedding
-    # -------------------------------------------------------------
-    use_llm = False
-    desc_path = None
-    if args is not None:
-        use_llm = getattr(args, "use_llm", False)
-        desc_path = getattr(args, "desc_path", None)
-
-    # 这里的第一个参数必须是 'imagenet'，不能是 config.model.clip_model_name
-    template_key = 'full'
-
-    text_embeddings = None
-    if use_llm and desc_path:
-        if dist.get_rank() == 0:
-            logger.info(f"*** Pre-computing LLM Features... ***")
-        
-        # 这一步只做预计算，不影响主模型的 text_embeddings
-        model_without_ddp.prepare_llm_features(desc_path, CLASSES, template_key)
-
-        # 手动调用修改后的 build_dataset_class_tokens
-        class_tokens = model_without_ddp.build_dataset_class_tokens(
-            template_key, 
-            CLASSES
-        )
-        text_embeddings = model_without_ddp.build_text_embedding(class_tokens)
-    # -------------------------------------------------------------
-
-    # 构建分割推理模型
     seg_model = build_dinotext_seg_inference(
         model_without_ddp,
-        data_loader.dataset, # 传 Subset 没问题，内部只用来取长度等
+        data_loader.dataset,
         config,
         seg_config,
     )
-
-    # [关键步骤] 强制覆盖 seg_model 里的 text_embedding
-    if text_embeddings is not None:
-        if hasattr(seg_model, 'text_embedding'):
-            seg_model.text_embedding = text_embeddings
-        elif hasattr(seg_model, 'module') and hasattr(seg_model.module, 'text_embedding'):
-            seg_model.module.text_embedding = text_embeddings
-        elif hasattr(seg_model, 'decode_head') and hasattr(seg_model.decode_head, 'text_embedding'):
-             # 有些架构 embedding 存在 head 里
-            seg_model.decode_head.text_embedding = text_embeddings
 
     if device == "cuda":
         mmddp_model = MMDistributedDataParallel(
@@ -633,11 +507,12 @@ def validate_seg(config, seg_config, data_loader, model, args=None):
         mmddp_model = seg_model
     mmddp_model.eval()
 
+    # TODO: Use multi-gpu-test from mmseg instead of ours
     results, pred_qualitatives, gt_qualitatives, num_classes = us.multi_gpu_test(
         model=mmddp_model,
         data_loader=data_loader,
         tmpdir=None,
-        gpu_collect=False,
+        gpu_collect=False, # device == "cuda",
         efficient_test=False,
         pre_eval=True,
         format_only=False,
@@ -645,8 +520,7 @@ def validate_seg(config, seg_config, data_loader, model, args=None):
 
     if device == "cpu" or dist.get_rank() == 0:
         from segmentation.evaluation.custom_eval import evaluate_dataset
-        # 这里必须用 real_dataset，因为它包含用于评估的标签映射
-        metric = [evaluate_dataset(real_dataset, results, logger=logger)]
+        metric = [evaluate_dataset(data_loader.dataset, results, logger=logger)]
     else:
         metric = [None]
 
